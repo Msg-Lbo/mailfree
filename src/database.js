@@ -287,19 +287,20 @@ export async function ensureUsersTables(db){
     "FOREIGN KEY(mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE" +
     ")"
   );
-  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_user ON user_mailboxes(user_id)');
-  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_mailbox ON user_mailboxes(mailbox_id)');
-  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_user_pinned ON user_mailboxes(user_id, is_pinned DESC)');
-  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_composite ON user_mailboxes(user_id, mailbox_id, is_pinned)');
-
-  // 迁移：若缺少 is_pinned 列，则添加
+  // 先补列，再创建依赖该列的索引，避免旧库在迁移时因缺列失败
   try {
     const um = await db.prepare("PRAGMA table_info(user_mailboxes)").all();
     const cols = (um?.results || []).map(r => (r.name || r?.['name']));
     if (!cols.includes('is_pinned')){
       await db.exec('ALTER TABLE user_mailboxes ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0');
     }
-  } catch (_){ }
+  } catch (e){
+    console.error('迁移 user_mailboxes.is_pinned 失败:', e);
+  }
+  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_user ON user_mailboxes(user_id)');
+  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_mailbox ON user_mailboxes(mailbox_id)');
+  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_user_pinned ON user_mailboxes(user_id, is_pinned DESC)');
+  await db.exec('CREATE INDEX IF NOT EXISTS idx_user_mailboxes_composite ON user_mailboxes(user_id, mailbox_id, is_pinned)');
 }
 
 export async function createUser(db, { username, passwordHash = null, role = 'user', mailboxLimit = 10 }){
@@ -469,4 +470,3 @@ export async function getUserMailboxes(db, userId){
   const { results } = await db.prepare(sql).bind(userId).all();
   return results || [];
 }
-
