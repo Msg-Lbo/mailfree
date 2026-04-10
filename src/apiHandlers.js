@@ -706,7 +706,8 @@ export async function handleApiRequest(request, db, options = { mockOnly: false,
         LIMIT ? OFFSET ?
       `).bind(uid, limit, offset).all();
       return Response.json(results || []);
-    }catch(_){
+    }catch(e){
+      console.error('/api/mailboxes 查询失败:', e);
       return Response.json([]);
     }
   }
@@ -1035,4 +1036,3 @@ export async function handleEmailReceive(request, db, env) {
     return new Response('处理邮件失败', { status: 500 });
   }
 }
-

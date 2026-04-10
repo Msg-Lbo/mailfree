@@ -118,14 +118,14 @@ wrangler d1 execute <你的D1名称> --file=./d1-init-basic.sql --local
 wrangler dev
 ```
 
-打开：`http://127.0.0.1:8787/login.html`
+打开：`http://127.0.0.1:8787/html/login.html`
 
 ## 首次上线后的必做步骤
 
 现在域名为**全动态配置**，没有默认域名。
 
 1. 用严格管理员登录（`ADMIN_NAME` / `ADMIN_PASSWORD`）
-2. 进入 `/admin.html`
+2. 进入 `/html/admin.html`
 3. 在「域名管理」里添加至少 1 个域名
 
 未添加域名前，`/api/generate` 与 `/api/create` 会返回 400（无法生成邮箱）。
